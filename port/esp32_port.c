@@ -87,13 +87,19 @@ esp_loader_error_t loader_port_esp32_init(const loader_esp32_config_t *config)
     }
 
     // Initialize boot pin selection pins
-    gpio_reset_pin(s_reset_trigger_pin);
-    gpio_set_pull_mode(s_reset_trigger_pin, GPIO_PULLUP_ONLY);
-    gpio_set_direction(s_reset_trigger_pin, GPIO_MODE_OUTPUT);
+    if(s_reset_trigger_pin != GPIO_NUM_NC)
+    {
+        gpio_reset_pin(s_reset_trigger_pin);
+        gpio_set_pull_mode(s_reset_trigger_pin, GPIO_PULLUP_ONLY);
+        gpio_set_direction(s_reset_trigger_pin, GPIO_MODE_OUTPUT);
+    }
 
-    gpio_reset_pin(s_gpio0_trigger_pin);
-    gpio_set_pull_mode(s_gpio0_trigger_pin, GPIO_PULLUP_ONLY);
-    gpio_set_direction(s_gpio0_trigger_pin, GPIO_MODE_OUTPUT);
+    if(s_gpio0_trigger_pin != GPIO_NUM_NC)
+    {
+        gpio_reset_pin(s_gpio0_trigger_pin);
+        gpio_set_pull_mode(s_gpio0_trigger_pin, GPIO_PULLUP_ONLY);
+        gpio_set_direction(s_gpio0_trigger_pin, GPIO_MODE_OUTPUT);
+    }
 
     return ESP_LOADER_SUCCESS;
 }
@@ -146,18 +152,24 @@ esp_loader_error_t loader_port_read(uint8_t *data, uint16_t size, uint32_t timeo
 
 void loader_port_enter_bootloader(void)
 {
-    gpio_set_level(s_gpio0_trigger_pin, SERIAL_FLASHER_BOOT_INVERT ? 1 : 0);
-    loader_port_reset_target();
-    loader_port_delay_ms(SERIAL_FLASHER_BOOT_HOLD_TIME_MS);
-    gpio_set_level(s_gpio0_trigger_pin, SERIAL_FLASHER_BOOT_INVERT ? 0 : 1);
+    if((s_reset_trigger_pin != GPIO_NUM_NC) && (s_gpio0_trigger_pin != GPIO_NUM_NC))
+    {
+        gpio_set_level(s_gpio0_trigger_pin, SERIAL_FLASHER_BOOT_INVERT ? 1 : 0);
+        loader_port_reset_target();
+        loader_port_delay_ms(SERIAL_FLASHER_BOOT_HOLD_TIME_MS);
+        gpio_set_level(s_gpio0_trigger_pin, SERIAL_FLASHER_BOOT_INVERT ? 0 : 1);
+    }
 }
 
 
 void loader_port_reset_target(void)
 {
-    gpio_set_level(s_reset_trigger_pin, SERIAL_FLASHER_RESET_INVERT ? 1 : 0);
-    loader_port_delay_ms(SERIAL_FLASHER_RESET_HOLD_TIME_MS);
-    gpio_set_level(s_reset_trigger_pin, SERIAL_FLASHER_RESET_INVERT ? 0 : 1);
+    if(s_reset_trigger_pin != GPIO_NUM_NC)
+    {
+        gpio_set_level(s_reset_trigger_pin, SERIAL_FLASHER_RESET_INVERT ? 1 : 0);
+        loader_port_delay_ms(SERIAL_FLASHER_RESET_HOLD_TIME_MS);
+        gpio_set_level(s_reset_trigger_pin, SERIAL_FLASHER_RESET_INVERT ? 0 : 1);
+    }
 }
 
 
